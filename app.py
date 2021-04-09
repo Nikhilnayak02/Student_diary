@@ -3,6 +3,7 @@ from flask import Flask, json,request,jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow,Schema,fields
 import datetime
+from sqlalchemy.sql import exists  
 
 
 from marshmallow import Schema,fields
@@ -32,13 +33,15 @@ class User(db.Model):
     user_id=db.Column(db.Integer,primary_key=True)
     name=db.Column(db.String(100),unique=True)
     email=db.Column(db.String(100),unique=True)
+    password=db.Column(db.String(100),unique=True)
     created_on = db.Column(db.DateTime, server_default=db.func.now())
    
 
 
-    def __init__(self,name,email):
+    def __init__(self,name,email,password):
         self.name=name
         self.email=email
+        self.password=password
 
 # Blog model one to many association
 class Blogpost(db.Model):
@@ -67,6 +70,7 @@ class UserSchema(ma.Schema):
         user_id=fields.Integer()
         name = fields.Str()
         email = fields.Str()
+        password=fields.Str()
         blogposts=ma.Nested(blog_schema,many=True)
         created_on=fields.DateTime()
 
@@ -80,53 +84,73 @@ user_schema = UserSchema()
 users_schema= UserSchema(many=True)
 
 # =====================
-@app.route('/users/allblogs',methods=['GET'])
+@app.route('/api/v1/users/allblogs',methods=['GET'])
 def blogs():
-    # oneuser=User.query.first()
-    # user_schema=UserSchema()
-    # o=user_schema.dump(oneuser)
-    # return jsonify(**o)
     allblogs=Blogpost.query.all()
     result=blog_schema.dump(allblogs)
     return jsonify(result)
 
 
 
+@app.route('/api/v1/users/blog/<user_id>',methods=['GET'])
+def userblogs(user_id):
+   
+    userblogs=Blogpost.query.filter_by(blog_owner_id=user_id).order_by(Blogpost.id.desc()).all()
+    result=blog_schema.dump(userblogs)
+    return jsonify(result)    
+
+
+
 
 # create user_schema
-@app.route('/user',methods=['POST'])
+@app.route('/api/v1/user',methods=['POST'])
 @cross_origin()
 def add_user():
     name=request.json['name']
     email=request.json['email']
-    new_user=User(name,email)
-    db.session.add(new_user)
-    db.session.commit()
-    return user_schema.jsonify(new_user)
+    password=request.json['password']
+    if name and email and password != "":
+        new_user=User(name,password,email)
+        db.session.add(new_user)
+        db.session.commit()
+        return user_schema.jsonify(new_user)
+
+@app.route('/api/v1/user/login',methods=['POST'])
+@cross_origin()
+def userlogin():
+    email=request.json['email']
+    password=request.json['password']
+    # db.session.query(db.exists().where(User.email == email and User.password== password))
+    if  email and password != "":
+        all_user=User.query.all()
+        for u in all_user:
+            if(u.email==email and u.password==password):
+                return jsonify({"status":"User exists","username":u.name})
+    # return jsonify('no user exists ')    
 
 # all users
-@app.route('/users',methods=['GET'])
+@app.route('/api/v1/users',methods=['GET'])
 def get_users():
     all_user=User.query.all()
     result=users_schema.dump(all_user)
     return jsonify(result)
 
-@app.route('/user/<user_id>',methods=['GET'])
+@app.route('/api/v1/user/<user_id>',methods=['GET'])
 def get_user(user_id):
     only_user=User.query.get(user_id)
     return user_schema.jsonify(only_user)    
 
 
-@app.route('/user/<user_id>',methods=['PUT'])
+@app.route('/api/v1/user/<user_id>',methods=['PUT'])
 def update_user(user_id):
 
     user = User.query.get(user_id)
 
 
-    name=request.json['name']
+    # name=request.json['name']
     email=request.json['email']
 
-    user.name=name
+    # user.name=name
     user.email=email
 
     
@@ -134,16 +158,17 @@ def update_user(user_id):
 
     return user_schema.jsonify(user)    
 
-@app.route('/user/<user_id>',methods=['DELETE'])
-def delete_user(id):
-    only_user=User.query.get(id)
+@app.route('/api/v1/user/<user_id>',methods=['DELETE'])
+def delete_user(user_id):
+    only_user=User.query.get(user_id)
+    # blog_data=Blogpost.query.get()
     db.session.delete(only_user)
     db.session.commit()
     return user_schema.jsonify(only_user)        
     
 # --------------------------------------------------------------
 # see all posts of specific user and create post for a specific user
-@app.route('/users/<user_id>',methods=['GET','POST'])
+@app.route('/api/v1/users/<user_id>',methods=['GET','POST'])
 def posts(user_id):
     post=request.json['post']
     if request.method=='POST':
