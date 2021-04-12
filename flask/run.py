@@ -15,6 +15,7 @@ from sqlalchemy.orm import backref, lazyload
 # initilize
 app= Flask(__name__)
 app.debug=True;
+port=5000
 CORS(app)
 
 # Database
@@ -186,4 +187,5 @@ def posts(user_id):
 #     pass
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run(host="0.0.0.0",port=port)
