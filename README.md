@@ -1,2 +1,2 @@
 # Blog_Server
-Server side implemented using react flask and sqllite
+Application implemented using react flask and sqllite
