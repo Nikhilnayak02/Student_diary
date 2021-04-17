@@ -19,8 +19,3 @@ RUN pip install uwsgi
 
 CMD ["uwsgi", "app.ini"]
 
-
-# EXPOSE 5000
-
-# ENTRYPOINT ["python3"]
-# CMD ["app.py"]

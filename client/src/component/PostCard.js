@@ -11,8 +11,8 @@ export default function PostCard(props) {
           <Feed.Content>    
             {/* <Feed.Date content='1 day ago' /> */}
             <Feed.Summary>
-              Welcome  {props.post.name}
-              <p>{props.post.email}</p>
+              <p>Name :  {props.post.name} </p>
+              <p>Email : {props.post.email}</p>
             </Feed.Summary>
           </Feed.Content>
         </Feed.Event>

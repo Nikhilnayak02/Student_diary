@@ -4,6 +4,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow,Schema,fields
 import datetime
 from sqlalchemy.sql import exists  
+from sqlalchemy.orm import validates
+from werkzeug.security import (generate_password_hash, 
+  check_password_hash)
+import re
 
 
 from marshmallow import Schema,fields
@@ -32,17 +36,38 @@ ma = Marshmallow(app)
 class User(db.Model):
     blogposts=db.relationship('Blogpost',backref='blog_owner')
     user_id=db.Column(db.Integer,primary_key=True)
-    name=db.Column(db.String(100),unique=True)
-    email=db.Column(db.String(100),unique=True)
+    name=db.Column(db.String(100),index=True,unique=True)
+    email=db.Column(db.String(100),unique=True,index=True)
     password=db.Column(db.String(100),unique=True)
     created_on = db.Column(db.DateTime, server_default=db.func.now())
-   
 
+    # def set_password(self, password): 
+    #   self.password = generate_password_hash(password) 
+    
+    @validates('name') 
+    def validate_username(self, key, name):
+        if not name:
+            raise AssertionError('No username provided')
+        if User.query.filter(User.name == name).first():
+            raise AssertionError('Username is already in use')
+        if len(name) < 5 or len(name) > 20:
+            raise AssertionError('Username must be between 5 and 20 characters') 
+        return name 
+    @validates('email') 
+    def validate_email(self, key, email):
+        if not email:
+            raise AssertionError('No email provided')
+        if not re.match("[^@]+@[^@]+\.[^@]+", email):
+            raise AssertionError('Provided email is not an email address') 
+        return email  
+       
 
     def __init__(self,name,email,password):
         self.name=name
         self.email=email
-        self.password=password
+        self.password=password      
+
+
 
 # Blog model one to many association
 class Blogpost(db.Model):
@@ -65,9 +90,6 @@ blog_schema= BlogSchema(many=True)
 
 # user Schemal
 class UserSchema(ma.Schema):
-    # class Meta:
-       
-        
         user_id=fields.Integer()
         name = fields.Str()
         email = fields.Str()
@@ -80,43 +102,36 @@ class UserSchema(ma.Schema):
 
 
 
+
+
 # init schema
 user_schema = UserSchema()
 users_schema= UserSchema(many=True)
 
 # =====================
-@app.route('/api/v1/users/allblogs',methods=['GET'])
-def blogs():
-    allblogs=Blogpost.query.all()
-    result=blog_schema.dump(allblogs)
-    return jsonify(result)
-
-
-
-@app.route('/api/v1/users/blog/<user_id>',methods=['GET'])
-def userblogs(user_id):
-   
-    userblogs=Blogpost.query.filter_by(blog_owner_id=user_id).order_by(Blogpost.id.desc()).all()
-    result=blog_schema.dump(userblogs)
-    return jsonify(result)    
+ 
 
 
 
 
 # create user_schema
-@app.route('/api/v1/user',methods=['POST'])
+@app.route('/api/v1/register',methods=['POST'])
 @cross_origin()
-def add_user():
-    name=request.json['name']
-    email=request.json['email']
-    password=request.json['password']
-    if name and email and password != "":
-        new_user=User(name,password,email)
-        db.session.add(new_user)
-        db.session.commit()
-        return user_schema.jsonify(new_user)
+def add_user(): 
+    data = request.get_json()
+    name = data['name']
+    password = data['password']
+    email = data['email']
+    
+    new_user=User(name=name,email=email,password=password)
+    try:
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify(msg='User successfully created'), 200
+    except AssertionError as exception_message: 
+            return jsonify(msg='Error: {}. '.format(exception_message)), 400    
 
-@app.route('/api/v1/user/login',methods=['POST'])
+@app.route('/api/v1/login',methods=['POST'])
 @cross_origin()
 def userlogin():
     email=request.json['email']
@@ -127,7 +142,7 @@ def userlogin():
         for u in all_user:
             if(u.email==email and u.password==password):
                 return jsonify({"status":"User exists","username":u.name})
-    # return jsonify('no user exists ')    
+    return jsonify({'msg':'no user exists '})    
 
 # all users
 @app.route('/api/v1/users',methods=['GET'])
@@ -144,21 +159,16 @@ def get_user(user_id):
 
 @app.route('/api/v1/user/<user_id>',methods=['PUT'])
 def update_user(user_id):
-
     user = User.query.get(user_id)
-
-
-    # name=request.json['name']
+   # name=request.json['name']
     email=request.json['email']
-
     # user.name=name
-    user.email=email
-
-    
+    user.email=email   
     db.session.commit()
+    return user_schema.jsonify(user) 
 
-    return user_schema.jsonify(user)    
 
+# Deleting a user
 @app.route('/api/v1/user/<user_id>',methods=['DELETE'])
 def delete_user(user_id):
     only_user=User.query.get(user_id)
@@ -168,8 +178,8 @@ def delete_user(user_id):
     return user_schema.jsonify(only_user)        
     
 # --------------------------------------------------------------
-# see all posts of specific user and create post for a specific user
-@app.route('/api/v1/users/<user_id>',methods=['GET','POST'])
+# see all posts of specific user
+@app.route('/api/v1/users/<user_id>',methods=['POST'])
 def posts(user_id):
     post=request.json['post']
     if request.method=='POST':
@@ -178,13 +188,24 @@ def posts(user_id):
           db.session.add(new_post)
           db.session.commit()
           return user_schema.jsonify(User.query.get(user_id)) 
-    # return jsonify("emptyPost")  
+    return jsonify("Post is empty")  
 
-# ------------------------------------ &&--------------------------
-# edit a post for a specific user
-# @app.route('/users/<user_id>/posts/<id>/edit',methods=['GET','POST'])
-# def post edit():
-#     pass
+@app.route('/api/v1/users/allblogs',methods=['GET'])
+def blogs():
+    allblogs=Blogpost.query.all()
+    result=blog_schema.dump(allblogs)
+    return jsonify(result)
+
+
+
+@app.route('/api/v1/users/blog/<user_id>',methods=['GET'])
+def userblogs(user_id):
+   
+    userblogs=Blogpost.query.filter_by(blog_owner_id=user_id).order_by(Blogpost.id.desc()).all()
+    result=blog_schema.dump(userblogs)
+    return jsonify(result)   
+
+
 
 if __name__ == '__main__':
     # app.run(debug=True)
