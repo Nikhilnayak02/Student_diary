@@ -1,2 +1,2 @@
-# Blog_Server
+# Student Diary
 Application implemented using react flask and sqllite
