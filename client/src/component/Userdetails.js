@@ -35,7 +35,7 @@ export default function Userdetails(props) {
     // },[])
 
     useEffect(()=>{
-        axios.get('http://107.23.60.251:5000/api/v1/users')
+        axios.get('http://54.83.252.172:5000/api/v1/users')
         .then(res=>{
             console.log(res)
             setPosts(res.data)
@@ -51,7 +51,7 @@ export default function Userdetails(props) {
         const b =user.name        
         const a = posts.find(o=>o.name===b)
         if(values.name && values.email!==""){
-            axios.put('http://107.23.60.251:5000/api/v1/user/'+a.user_id,values).resp(resp=>console.log(resp))
+            axios.put('http://54.83.252.172:5000/api/v1/user/'+a.user_id,values).resp(resp=>console.log(resp))
             .catch(err=>console.log(err))
     
         }else{
@@ -64,7 +64,7 @@ export default function Userdetails(props) {
             const b =user.name        
             const a = posts.find(o=>o.name===b)
             console.log(a.user_id)
-            axios.delete('http://107.23.60.251:5000/api/v1/user/'+a.user_id).then(resp=>console.log(resp))
+            axios.delete('http://54.83.252.172:5000/api/v1/user/'+a.user_id).then(resp=>console.log(resp))
             .catch(err=>console.log(err))
             logout();
             alert.show(<div style={{ color: 'red' }}>"Successfully Deleted user"</div>)
@@ -83,7 +83,7 @@ export default function Userdetails(props) {
         const b =user.name        
         const a = posts.find(o=>o.name===b)
         
-            axios.put('http://107.23.60.251:5000/api/v1/user/'+a.user_id,values).then(resp=>console.log(resp)) 
+            axios.put('http://54.83.252.172:5000/api/v1/user/'+a.user_id,values).then(resp=>console.log(resp)) 
             alert.show(<div style={{ color: 'green' }}>"Successfully Updated"</div>)
             logout();
             
@@ -127,12 +127,6 @@ export default function Userdetails(props) {
               <CardContent>
               <Card.Header>Update User Details</Card.Header>
               <Form onSubmit={onSubmit} noValidate>
-                {/* <Form.Input
-                  label='name'
-                  placeholder="name.."
-                  name="name"
-                  value={values.username}
-                  onChange={onChange1}  required /> */}
                   <Form.Input
                   label='Email'
                   placeholder="Email.."

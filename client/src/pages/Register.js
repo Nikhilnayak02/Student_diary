@@ -11,7 +11,6 @@ export default function Register(props) {
         name:'',
         email:'',
         password:''
-        // password:''
     })
 
     const [errors,setErrors]=useState({});
@@ -25,14 +24,19 @@ export default function Register(props) {
     const onSubmit=(e)=>{
         e.preventDefault();
         console.log(values);
-        axios.post('http://107.23.60.251:5000/api/v1/user',values)
+        axios.post('http://54.83.252.172:5000/api/v1/register',values)
         .then(resp=>{
-            // console.log(resp)
-            context.login(values);
-            props.history.push('/')
-            alert.show(<div style={{ color: 'green' }}>"Successfully Registered  Login to post your blog"</div>)
-        }).catch(err=>{
-            alert.show(<div style={{ color: 'red' }}>"Enter a Valid Email, username,password "</div>)    
+            if(resp.data.msg==="User successfully created"){
+                context.login(values);
+                alert.show(<div style={{ color: 'green' }}>"Successfully Registered"</div>)
+                props.history.push('/') 
+            }else{
+                alert.show(<div style={{ color: 'red' }}>"Enter valid details"</div>)
+            }
+                     
+        })
+        .catch(err=>{
+            alert.show(<div style={{ color: 'red' }}>"Enter a Valid Email, username, password "</div>)    
         })
     }
 
@@ -41,18 +45,20 @@ export default function Register(props) {
             <Form onSubmit={onSubmit} noValidate>
                 <h1>Register</h1>
                 <Form.Input
-                  label='name'
+                  label='Username'
                   placeholder="name.."
                   name="name"
                   value={values.username}
                   onChange={onChange}  required />
                   <Form.Input
+                //   type='email'
                   label='Email'
                   placeholder="Email.."
                   name="email"
                   value={values.email}
                   onChange={onChange}  required/>
                   <Form.Input
+                //   type='password'
                   label='password'
                   placeholder="password.."
                   name="password"

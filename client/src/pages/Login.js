@@ -18,7 +18,7 @@ export default function Login(props) {
     const [posts,setPosts]=useState([])
     const alert = useAlert()
     useEffect(()=>{
-        axios.get('http://107.23.60.251:5000/api/v1/users')
+        axios.get('http://54.83.252.172:5000/api/v1/users')
         .then(res=>{
             // console.log(res)
             setPosts(res.data)
@@ -40,32 +40,19 @@ export default function Login(props) {
     const onSubmit=(e)=>{
         e.preventDefault();
 
-        axios.post("http://107.23.60.251:5000/api/v1/user/login",values).
+        axios.post("http://54.83.252.172:5000/api/v1/login",values).
         then((res)=>{ console.log(values);
-            context.login({"name":res.data.username})
-            props.history.push('/')
-            alert.show("Logged in successfully")}).catch(alert.show("Unable to login check your emailid and password"))
-
+            if(res.data.status==="User exists"){
+                context.login({"name":res.data.username})
+                props.history.push('/')
+                alert.show("Logged in successfully")}
+            else{
+                alert.show("Unable to login check your email_id and password")
+            }}
+            )
     }
 
-        // posts.map((post)=>{
-        // if(post.password===values.password && post.email===values.email){
-            // axios.post()
-           
-            // setValues(...values)
-            // console.log(values);
-            // context.login({"name":post.name})
-            // props.history.push('/')
-            // alert.show("Logged in successfully")
-
-        
-        // else
-        // // alert("Password is invalid")
-        // // alert.show("Enter a valid email id and password")
-        // console.log("cant login");
-        // props.history.push('/')
-        // })
-    // }
+       
 
 
    
@@ -75,12 +62,6 @@ export default function Login(props) {
         <div className="form-container">
             <Form onSubmit={onSubmit} noValidate>
                 <h1>Login</h1>
-                {/* <Form.Input
-                  label='name'
-                  placeholder="name.."
-                  name="name"
-                  value={values.username}
-                  onChange={onChange} required='true' /> */}
                   <Form.Input
                   label='Email'
                   placeholder="Email.."

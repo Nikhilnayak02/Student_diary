@@ -16,7 +16,7 @@ export default function Home() {
 
     // console.log(user.name)
     useEffect(()=>{
-        axios.get('http://107.23.60.251:5000/api/v1/users')
+        axios.get('http://54.83.252.172:5000/api/v1/users')
         .then(res=>{
             // console.log(res)
             setPosts(res.data)
@@ -26,7 +26,7 @@ export default function Home() {
     },[])
 
     useEffect(()=>{
-        axios.get('http://107.23.60.251:5000/api/v1/users/allblogs')
+        axios.get('http://54.83.252.172:5000/api/v1/users/allblogs')
         .then(res=>{
             // console.log()
             setblogs(res.data)
@@ -66,7 +66,7 @@ export default function Home() {
               
 
               </Grid.Column>
-              <Grid.Column width={8}>
+              <Grid.Column width={7}>
                
                           {user && (
                           <Grid.Column>
@@ -102,7 +102,7 @@ export default function Home() {
 
 
               </Grid.Column>
-              <Grid.Column width={4}>
+              <Grid.Column width={5}>
               <Grid.Row>
 
               <Divider section />
