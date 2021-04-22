@@ -178,7 +178,7 @@ def delete_user(user_id):
     return user_schema.jsonify(only_user)        
     
 # --------------------------------------------------------------
-# see all posts of specific user
+# posts of specific user
 @app.route('/api/v1/users/<user_id>',methods=['POST'])
 def posts(user_id):
     post=request.json['post']
